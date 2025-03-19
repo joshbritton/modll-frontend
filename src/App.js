@@ -1,74 +1,78 @@
 import React, { useState } from "react";
 
-function App() {
-  const [gameData, setGameData] = useState(null);
+const App = () => {
+  const [userQuery, setUserQuery] = useState("");
+  const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [gameId, setGameId] = useState("");
 
-  const fetchGameData = async () => {
+  const fetchGameAnalysis = async () => {
     setLoading(true);
-    setError(null);
+    setResponse(null);
 
     try {
+      const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
+      const prompt = `
+        You are The MODLL, a sophisticated betting assistant for college basketball games.
+        A user has asked: "${userQuery}" 
+        Provide a **detailed** betting analysis that includes:
+        
+        ✅ MODLL’s predicted outcome vs. Vegas odds.
+        ✅ Three categories of bets (Very Likely, Likely, Possible).
+        ✅ Confidence ranking (1-10) for each bet.
+        ✅ Sharp money movement insights.
+        ✅ MODLL’s highest variance bets.
+        ✅ Any trap lines or public betting bias.
+        ✅ Expected Value (EV) calculations.
+        ✅ Any last-minute news adjustments.
+        ✅ The MODLL’s **best bet recommendation**.
+
+        Use **up-to-date team stats, player performance, and historical trends** to support your picks.
+      `;
+
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           model: "gpt-4",
-          messages: [
-            {
-              role: "system",
-              content: "You are a sophisticated betting assistant for college basketball games. Provide an in-depth betting analysis for the given game ID.",
-            },
-            {
-              role: "user",
-              content: `Analyze the betting odds and predictions for Game ID: ${gameId}`,
-            },
-          ],
-          max_tokens: 500,
+          messages: [{ role: "system", content: prompt }],
+          max_tokens: 1000,
         }),
       });
 
       const data = await response.json();
-
-      if (data.choices && data.choices.length > 0) {
-        setGameData(data.choices[0].message.content);
-      } else {
-        setError("No data returned from OpenAI.");
-      }
-    } catch (err) {
-      setError("Error fetching data. Please try again.");
+      setResponse(data.choices[0]?.message?.content || "No response from AI");
+    } catch (error) {
+      setResponse("Error fetching game analysis.");
+      console.error("Error:", error);
     }
 
     setLoading(false);
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h1>MODLL Game Data</h1>
-      <input
-        type="text"
-        placeholder="Enter Game ID"
-        value={gameId}
-        onChange={(e) => setGameId(e.target.value)}
+    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+      <h1>MODLL Betting Analysis</h1>
+      <p>Ask for a breakdown of any college basketball game:</p>
+      <textarea
+        placeholder="Example: 'Give me an analysis of Duke vs Kentucky on March 20th.'"
+        value={userQuery}
+        onChange={(e) => setUserQuery(e.target.value)}
+        style={{ width: "100%", height: "100px", padding: "10px", fontSize: "16px" }}
       />
-      <button onClick={fetchGameData} disabled={loading}>
-        {loading ? "Loading..." : "Get Analysis"}
+      <br />
+      <button 
+        onClick={fetchGameAnalysis} 
+        style={{ padding: "10px 20px", fontSize: "16px", marginTop: "10px" }}
+      >
+        Get Betting Analysis
       </button>
-      
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {gameData && (
-        <div style={{ marginTop: "20px", padding: "10px", border: "1px solid black" }}>
-          <h2>Game Analysis:</h2>
-          <p>{gameData}</p>
-        </div>
-      )}
+      {loading && <p>Loading game data...</p>}
+      {response && <pre style={{ whiteSpace: "pre-wrap", marginTop: "20px", fontSize: "16px" }}>{response}</pre>}
     </div>
   );
-}
+};
 
 export default App;
