@@ -1,45 +1,71 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 function App() {
   const [gameData, setGameData] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [gameId, setGameId] = useState("");
 
-  useEffect(() => {
-    // API URL (Replace with your actual AWS API Gateway endpoint)
-    const API_URL =
-      "https://h5rvy1rkdd.execute-api.us-east-2.amazonaws.com/MODLL_GetGameData?game_id=12345&date=2025-03-18";
+  const fetchGameData = async () => {
+    setLoading(true);
+    setError(null);
 
-    fetch(API_URL)
-      .then((response) => response.json())
-      .then((data) => setGameData(data))
-      .catch((error) => setError(error.message));
-  }, []);
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4",
+          messages: [
+            {
+              role: "system",
+              content: "You are a sophisticated betting assistant for college basketball games. Provide an in-depth betting analysis for the given game ID.",
+            },
+            {
+              role: "user",
+              content: `Analyze the betting odds and predictions for Game ID: ${gameId}`,
+            },
+          ],
+          max_tokens: 500,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.choices && data.choices.length > 0) {
+        setGameData(data.choices[0].message.content);
+      } else {
+        setError("No data returned from OpenAI.");
+      }
+    } catch (err) {
+      setError("Error fetching data. Please try again.");
+    }
+
+    setLoading(false);
+  };
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial" }}>
       <h1>MODLL Game Data</h1>
-
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
-
-      {gameData ? (
-        <div>
-          <h2>Game ID: {gameData.game_id}</h2>
-          <p>
-            <strong>Date:</strong> {gameData.date}
-          </p>
-          <p>
-            <strong>Team 1:</strong> {gameData.team_1} vs{" "}
-            <strong>Team 2:</strong> {gameData.team_2}
-          </p>
-          <p>
-            <strong>MODLL Prediction:</strong> {gameData.modll_prediction}
-          </p>
-          <p>
-            <strong>Vegas Line:</strong> {gameData.vegas_line}
-          </p>
+      <input
+        type="text"
+        placeholder="Enter Game ID"
+        value={gameId}
+        onChange={(e) => setGameId(e.target.value)}
+      />
+      <button onClick={fetchGameData} disabled={loading}>
+        {loading ? "Loading..." : "Get Analysis"}
+      </button>
+      
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {gameData && (
+        <div style={{ marginTop: "20px", padding: "10px", border: "1px solid black" }}>
+          <h2>Game Analysis:</h2>
+          <p>{gameData}</p>
         </div>
-      ) : (
-        <p>Loading game data...</p>
       )}
     </div>
   );
