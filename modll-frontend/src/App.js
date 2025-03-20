@@ -10,7 +10,7 @@ const App = () => {
     setResponse(null);
 
     const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
-    console.log("🔍 API Key in App:", apiKey); // 🔍 Debugging line to check API key
+    console.log("API Key in App:", apiKey); // 🔍 Debugging line to check API key
 
     if (!apiKey) {
       console.error("❌ OpenAI API key is missing.");
@@ -21,37 +21,21 @@ const App = () => {
 
     try {
       const prompt = `
-      You are a sophisticated betting assistant for college basketball games. 
-      When a user asks about good bets for an upcoming match, you will:
-      - Search for and analyze the recent statistics for both teams involved.
-      - Utilize the MODLL, evaluate player performance, team form, head-to-head records, where the game is being played, and any other relevant factors.
-      - Generate three categories of betting options:
-        1️⃣ **Very Likely (Low Winnings)**: Provide 2-3 high-probability bets with lower odds.
-        2️⃣ **Likely (Middle Odds)**: Suggest 2-3 moderately risky bets with balanced odds.
-        3️⃣ **Possible (High Winnings)**: Offer 2-3 riskier bets with higher potential payouts.
-      - For each category, include a mix of the following bet types:
-        ✅ Game result (win, lose)  
-        ✅ Player statistics (points, assists, rebounds, blocks)  
+        You are The MODLL, a sophisticated betting assistant for college basketball games.
+        A user has asked: "${userQuery}" 
+        Provide a **detailed** betting analysis that includes:
 
-      **Ensure all analyses are presented in a structured, easy-to-read format.**  
+        ✅ MODLL’s predicted outcome vs. Vegas odds.
+        ✅ Three categories of bets (Very Likely, Likely, Possible).
+        ✅ Confidence ranking (1-10) for each bet.
+        ✅ Sharp money movement insights.
+        ✅ MODLL’s highest variance bets.
+        ✅ Any trap lines or public betting bias.
+        ✅ Expected Value (EV) calculations.
+        ✅ Any last-minute news adjustments.
+        ✅ The MODLL’s **best bet recommendation**.
 
-      ### **All future betting analyses must include:**
-      ✅ MODLL’s **predicted outcome** vs. **Vegas odds** (highlight discrepancies).  
-      ✅ **Three categories of bets** (Very Likely, Likely, Possible).  
-      ✅ **Confidence ranking (1-10)** for each bet based on MODLL insights.  
-      ✅ **Sharp money movement insights** (any key line shifts or betting trends).  
-      ✅ **MODLL’s highest variance bets** (where the model sees the biggest edge).  
-      ✅ **Trap lines & public betting bias** (flag any games where the market is overinflated).  
-      ✅ **Expected Value (EV) calculations** to quantify the value of bets.  
-      ✅ **Late-breaking news adjustments** (injuries, suspensions, coaching changes).  
-      ✅ **The MODLL’s best bet recommendation for the game.**  
-
-      **Use the most current data available** to ensure accuracy.
-      Always include **sources for your analysis** (betting odds, team stats, player performance, matchup insights).
-      
-      ---
-      
-      **User Query:** "${userQuery}"
+        Use **up-to-date team stats, player performance, and historical trends** to support your picks.
       `;
 
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -63,7 +47,7 @@ const App = () => {
         body: JSON.stringify({
           model: "gpt-4", // Use "gpt-3.5-turbo" if GPT-4 is unavailable
           messages: [{ role: "system", content: prompt }],
-          max_tokens: 1200, // Adjust token limit as needed
+          max_tokens: 1000,
         }),
       });
 
@@ -72,10 +56,9 @@ const App = () => {
       }
 
       const data = await response.json();
-      console.log("✅ OpenAI Response:", data); // Debugging log
       setResponse(data.choices[0]?.message?.content || "No response from AI");
     } catch (error) {
-      console.error("❌ Error fetching game analysis:", error);
+      console.error("Error fetching game analysis:", error);
       setResponse(`Error fetching game analysis: ${error.message}`);
     }
 
