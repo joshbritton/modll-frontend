@@ -10,7 +10,7 @@ const App = () => {
     setResponse(null);
 
     const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
-    console.log("API Key in App:", apiKey); // 🔍 Debugging line to check API key
+    console.log("🔍 API Key in App:", apiKey); // 🔍 Debugging line to check API key
 
     if (!apiKey) {
       console.error("❌ OpenAI API key is missing.");
@@ -32,7 +32,7 @@ const App = () => {
       - For each category, include a mix of the following bet types:
         ✅ Game result (win, lose)  
         ✅ Player statistics (points, assists, rebounds, blocks)  
-      
+
       **Ensure all analyses are presented in a structured, easy-to-read format.**  
 
       ### **All future betting analyses must include:**
@@ -72,14 +72,15 @@ const App = () => {
       }
 
       const data = await response.json();
+      console.log("✅ OpenAI Response:", data); // Debugging log
       setResponse(data.choices[0]?.message?.content || "No response from AI");
     } catch (error) {
-      console.error("Error fetching game analysis:", error);
+      console.error("❌ Error fetching game analysis:", error);
       setResponse(`Error fetching game analysis: ${error.message}`);
     }
 
     setLoading(false);
-};
+  };
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
