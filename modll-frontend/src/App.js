@@ -9,13 +9,22 @@ const App = () => {
     setLoading(true);
     setResponse(null);
 
+    const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
+    console.log("API Key in App:", apiKey); // 🔍 Debugging line to check API key
+
+    if (!apiKey) {
+      console.error("❌ OpenAI API key is missing.");
+      setResponse("Error: Missing API key. Make sure it is set in Vercel.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
       const prompt = `
         You are The MODLL, a sophisticated betting assistant for college basketball games.
         A user has asked: "${userQuery}" 
         Provide a **detailed** betting analysis that includes:
-        
+
         ✅ MODLL’s predicted outcome vs. Vegas odds.
         ✅ Three categories of bets (Very Likely, Likely, Possible).
         ✅ Confidence ranking (1-10) for each bet.
@@ -36,17 +45,21 @@ const App = () => {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4",
+          model: "gpt-4", // Use "gpt-3.5-turbo" if GPT-4 is unavailable
           messages: [{ role: "system", content: prompt }],
           max_tokens: 1000,
         }),
       });
 
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
       const data = await response.json();
       setResponse(data.choices[0]?.message?.content || "No response from AI");
     } catch (error) {
-      setResponse("Error fetching game analysis.");
-      console.error("Error:", error);
+      console.error("Error fetching game analysis:", error);
+      setResponse(`Error fetching game analysis: ${error.message}`);
     }
 
     setLoading(false);
